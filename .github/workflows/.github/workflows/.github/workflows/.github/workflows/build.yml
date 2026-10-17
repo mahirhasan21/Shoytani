@@ -1,0 +1,29 @@
+name: Build APK
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Arrange files
+        run: |
+          mkdir -p app/src/main/java/com/ariyan/shoytani app/src/main/assets app/src/main/res/mipmap-xxxhdpi app/src/main/res/mipmap-xxhdpi
+          mv root-build.gradle build.gradle
+          mv app-build.gradle app/build.gradle
+          mv AndroidManifest.xml app/src/main/
+          mv MainActivity.java app/src/main/java/com/ariyan/shoytani/
+          mv injector.js app/src/main/assets/
+          cp ic_launcher.png app/src/main/res/mipmap-xxxhdpi/
+          mv ic_launcher.png app/src/main/res/mipmap-xxhdpi/
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: '8.9' }
+      - run: gradle assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SHOYTANI-SHOKTI-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
