@@ -10,6 +10,7 @@ jobs:
       - name: Arrange files
         run: |
           mkdir -p app/src/main/java/com/ariyan/shoytani app/src/main/assets app/src/main/res/mipmap-xxxhdpi app/src/main/res/mipmap-xxhdpi
+          printf 'android.useAndroidX=true\norg.gradle.jvmargs=-Xmx2g\n' > gradle.properties
           mv root-build.gradle build.gradle
           mv app-build.gradle app/build.gradle
           mv AndroidManifest.xml app/src/main/
