@@ -1,0 +1,81 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<style>
+:root{--bg:#0a0508;--card:#222224;--card2:#2a2a2e;--tx:#fff;--mu:#9a9aa6;--ac:#e0506e}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:Roboto,system-ui,sans-serif;padding:0 16px 40px}
+.hd{display:flex;align-items:center;gap:12px;padding:22px 0 16px}
+.hd button{background:none;border:0;color:#fff;font-size:30px;padding:0 8px 0 0}
+.hd h1{font-size:30px;margin:0;font-weight:500;flex:1}
+.beta{background:#2a2a2e;border-radius:99px;padding:8px 16px;font-size:15px}
+.srch{display:flex;align-items:center;gap:14px;background:#38383e;border-radius:99px;padding:0 24px;height:66px;margin-top:6px}
+.srch input{flex:1;background:none;border:0;outline:0;color:#fff;font-size:20px}
+.srch input::placeholder{color:#9a9aa6}
+.sec{margin:34px 0 14px 4px;color:#cfcfd8;font-size:19px;letter-spacing:.5px}
+.item{background:var(--card);border-radius:30px;margin-bottom:10px;overflow:hidden}
+.row{display:flex;align-items:center;gap:14px;padding:18px 20px}
+.row img,.row .ph{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#444;flex:none}
+.row .nm{flex:1;font-size:22px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .st{color:#aaa;font-size:20px}
+.sw{width:64px;height:36px;border-radius:99px;background:#555;position:relative;flex:none;transition:.2s}
+.sw:after{content:"";position:absolute;top:4px;left:4px;width:28px;height:28px;border-radius:50%;background:#ddd;transition:.2s}
+.sw.on{background:var(--ac)}.sw.on:after{left:32px}
+.det{display:none;padding:0 20px 18px;font-size:15.5px;color:#c8c8d2;line-height:1.5}
+.det.open{display:block}
+.det code{color:#fff;word-break:break-all;font-size:13.5px}
+.btns{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.btn{border:1.5px solid #2f7ec0;color:#8ab4f8;background:none;border-radius:99px;padding:12px 26px;font-size:17px}
+.btn.red{border-color:#c0392b;color:#ff8a80}
+.btn.pink{border-color:var(--ac);color:var(--ac)}
+.empty{background:var(--card);border-radius:30px;padding:30px 24px;font-size:20px}
+.note{color:#aaa;font-size:19px;line-height:1.55;margin:26px 4px}
+.link{color:var(--ac);font-size:22px;margin:0 4px 8px;display:block;background:none;border:0;padding:8px 0;text-align:left}
+.add{background:var(--card);border-radius:99px;padding:26px 28px;font-size:22px;color:var(--ac);border:0;width:100%;text-align:left;margin-top:8px}
+.dev{display:none;margin-top:6px;background:#1b1b22;border-radius:26px;padding:18px 20px}
+.dev.open{display:block}
+.dev .t{display:flex;align-items:center;justify-content:space-between;font-size:19px;margin-bottom:6px}
+#toast{position:fixed;left:16px;right:16px;bottom:24px;background:#333;border-radius:14px;padding:14px 18px;font-size:16px;display:none}
+</style></head><body>
+<div class="hd"><button onclick="Android.close()">←</button><h1>Manage Extensions</h1><span class="beta">Beta</span></div>
+<div class="srch"><span style="font-size:26px;color:#aaa">🔍</span><input id="q" placeholder="Search extensions" oninput="draw()"></div>
+<div class="sec">INSTALLED</div>
+<div id="list"></div>
+<button class="add" onclick="Android.addFile()">＋ Install extension (.zip / .crx / .user.js)…</button>
+<div class="note">Extension support is still experimental and may be unstable. Some extensions that are not designed for mobile devices may not work properly.</div>
+<button class="link" onclick="document.getElementById('dev').classList.toggle('open')">Developer options…</button>
+<div class="dev" id="dev">
+ <div class="t"><span>Developer mode</span><div class="sw on" style="opacity:.8"></div></div>
+ <div class="btns"><button class="btn" onclick="Android.addFile()">(from .zip/.crx/.user.js)</button><button class="btn" onclick="refresh('Updated')">Update</button></div>
+</div>
+<div id="toast"></div>
+<script>
+var L=[],open={};
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function load(){try{L=JSON.parse(Android.list())}catch(e){L=[]}}
+function draw(){
+ var q=document.getElementById('q').value.toLowerCase(),h='';
+ var f=L.filter(function(e){return e.name.toLowerCase().indexOf(q)>=0});
+ if(!f.length)h='<div class="empty">'+(L.length?'No matching extensions':'No installed extensions')+'</div>';
+ f.forEach(function(e){
+  var img=e.icon?'<img src="'+esc(e.icon)+'" onerror="this.outerHTML=\'<div class=ph></div>\'">':'<div class="ph"></div>';
+  h+='<div class="item"><div class="row" onclick="tg(\''+e.id+'\')">'+img+'<div class="nm">'+esc(e.name)+'</div>'
+   +'<span class="st">'+(e.enabled?'On':'Off')+'</span>'
+   +'<div class="sw'+(e.enabled?' on':'')+'" onclick="event.stopPropagation();sw(\''+e.id+'\','+(!e.enabled)+')"></div></div>'
+   +'<div class="det'+(open[e.id]?' open':'')+'">'+esc(e.desc||'')+'<br>Version '+esc(e.version)+(e.builtin?' · built-in':'')
+   +'<br>ID: <code>'+esc(e.id)+'</code>'
+   +(e.sites&&e.sites.length?'<br>Runs on: <code>'+esc(e.sites.slice(0,4).join('  '))+(e.sites.length>4?' …':'')+'</code>':'')
+   +'<div class="btns">'
+   +(e.popup?'<button class="btn pink" onclick="Android.openPopup(\''+e.id+'\')">Open</button>':'')
+   +(e.builtin?'':'<button class="btn" onclick="Android.reloadExt(\''+e.id+'\');refresh(\'Reloaded\')">Reload</button><button class="btn red" onclick="rm(\''+e.id+'\')">Remove</button>')
+   +'</div></div></div>';
+ });
+ document.getElementById('list').innerHTML=h;
+}
+function tg(id){open[id]=!open[id];draw()}
+function sw(id,on){Android.toggle(id,on);refresh(on?'On — পেজ রিলোড দাও':'Off — পেজ রিলোড দাও')}
+function rm(id){if(confirm('Remove this extension?')){Android.remove(id);refresh('Removed')}}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(window.__t);window.__t=setTimeout(function(){t.style.display='none'},2600)}
+function refresh(m){load();draw();if(m)toast(m)}
+refresh();
+</script></body></html>
